@@ -13,16 +13,17 @@ a.result:hover { background:#eee; }
 </style>
 </head>
 <body>
+
 <h1>Welcome to Inside</h1>
 <p>Type a page name or keyword:</p>
 
-<input type="text" id="searchBox" placeholder="Searchs...">
+<input type="text" id="searchBox" placeholder="Search pages...">
 <button id="searchButton">Search</button>
 
 <div id="results"></div>
 
 <script>
-/* --- Local pages --- */
+/* ---------------- LOCAL PAGES ---------------- */
 const localPages = [
   {name: "Home", url: "lan://pw.home.fun"},
   {name: "Games", url: "lan://pw.games.fun"},
@@ -30,7 +31,7 @@ const localPages = [
   {name: "About", url: "lan://pw.about.fun"}
 ];
 
-/* --- Search logic --- */
+/* ---------------- SEARCH FUNCTION ---------------- */
 function doSearch(){
   const query = document.getElementById("searchBox").value.trim().toLowerCase();
   const resultsDiv = document.getElementById("results");
@@ -43,25 +44,32 @@ function doSearch(){
   if(matches.length === 0){
     // fallback to DuckDuckGo
     const ddgLink = document.createElement("a");
-    ddgLink.href = "https://duckduckgo.com/?q=" + encodeURIComponent(query);
-    ddgLink.target = "_blank";
-    ddgLink.textContent = "Search DuckDuckGo for \"" + query + "\"";
+    ddgLink.href = "#";
     ddgLink.className = "result";
+    ddgLink.textContent = `Search DuckDuckGo for "${query}"`;
+    ddgLink.onclick = function(e){
+      e.preventDefault();
+      // open in new tab inside Inside browser
+      if(window.parent && window.parent.addTab){
+        window.parent.addTab("DuckDuckGo: " + query, "https://duckduckgo.com/?q=" + encodeURIComponent(query));
+      } else {
+        window.open("https://duckduckgo.com/?q=" + encodeURIComponent(query), "_blank");
+      }
+    }
     resultsDiv.appendChild(ddgLink);
   } else {
     matches.forEach(p => {
       const a = document.createElement("a");
-      a.href = p.url;
+      a.href = "#";
       a.className = "result";
-      a.textContent = p.name + " (" + p.url + ")";
-      // open inside your iframe
+      a.textContent = `${p.name} (${p.url})`;
       a.onclick = function(e){
         e.preventDefault();
-        // communicate with parent browser iframe
-        if(window.parent && window.parent.loadURL){
-          window.parent.loadURL(p.url);
+        // create a new tab in Inside browser
+        if(window.parent && window.parent.addTab){
+          window.parent.addTab(p.name, p.url);
         } else {
-          window.location.href = p.url; // fallback
+          window.location.href = p.url;
         }
       }
       resultsDiv.appendChild(a);
@@ -69,7 +77,7 @@ function doSearch(){
   }
 }
 
-/* --- Event listeners --- */
+/* ---------------- EVENT LISTENERS ---------------- */
 document.getElementById("searchButton").onclick = doSearch;
 document.getElementById("searchBox").onkeydown = function(e){
   if(e.key === "Enter") doSearch();
@@ -78,3 +86,4 @@ document.getElementById("searchBox").onkeydown = function(e){
 
 </body>
 </html>
+
