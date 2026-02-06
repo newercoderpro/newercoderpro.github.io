@@ -3,222 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>Inside Browser</title>
+<link rel="stylesheet" href="style.css"> <!-- optional for CSS if you want -->
 <style>
-html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; }
-
-#tabBar {
-  display: flex;
-  gap: 4px;
-  padding: 4px 8px;
-  background: #ddd;
-  border-bottom: 1px solid #ccc;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 20;
-  overflow-x: auto;
-}
-
-.tab {
-  padding: 6px 12px;
-  background: #eee;
-  border-radius: 4px 4px 0 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.tab.active { background: #fff; font-weight: bold; border-bottom: 2px solid #2196F3; }
-
-.tab button.closeTab {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-#toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  background: #f1f3f4;
-  border-bottom: 1px solid #ccc;
-  position: fixed;
-  top: 32px; /* below tabBar */
-  width: 100%;
-  left: 0;
-  z-index: 10;
-}
-
-#toolbar button { font-size: 16px; padding: 6px 10px; cursor: pointer; }
-
-#address {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 16px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-
-#iframeContainer { position: absolute; top: 80px; bottom: 0; left: 0; right: 0; }
-#contentFrame { width: 100%; height: 100%; border: none; }
+html, body { margin:0; height:100%; font-family:Arial,sans-serif; }
+#tabBar { display:flex; gap:4px; padding:4px 8px; background:#ddd; border-bottom:1px solid #ccc; position:fixed; top:0; left:0; width:100%; z-index:20; overflow-x:auto; }
+.tab { padding:6px 12px; background:#eee; border-radius:4px 4px 0 0; cursor:pointer; display:flex; align-items:center; gap:4px; flex-shrink:0; }
+.tab.active { background:#fff; font-weight:bold; border-bottom:2px solid #2196F3; }
+.tab button.closeTab { background:transparent; border:none; cursor:pointer; font-weight:bold; font-size:14px; }
+#toolbar { display:flex; align-items:center; gap:8px; padding:8px; background:#f1f3f4; border-bottom:1px solid #ccc; position:fixed; top:32px; width:100%; left:0; z-index:10; }
+#toolbar button { font-size:16px; padding:6px 10px; cursor:pointer; }
+#address { flex:1; padding:8px 12px; border-radius:16px; border:1px solid #ccc; font-size:14px; }
+#iframeContainer { position:absolute; top:80px; bottom:0; left:0; right:0; }
+#contentFrame { width:100%; height:100%; border:none; }
 </style>
 </head>
 <body>
 
-<!-- TAB BAR -->
 <div id="tabBar"></div>
 
-<!-- TOOLBAR -->
 <div id="toolbar">
   <button onclick="goBack()">⬅</button>
   <button onclick="refreshPage()">🔄</button>
   <button onclick="goHome()">🏠</button>
-  <input id="address" value="lan://pw.home.fun" onkeydown="if(event.key==='Enter'){goToURL()}"/>
+  <input id="address" value="" onkeydown="if(event.key==='Enter'){goToURL()}" />
   <button onclick="goToURL()">Go</button>
   <button onclick="createNewTab()">＋</button>
 </div>
 
-<!-- IFRAME -->
 <div id="iframeContainer">
   <iframe id="contentFrame" src=""></iframe>
 </div>
 
-<script>
-/* ----------------- TAB SYSTEM ----------------- */
-const maxTabs = 10;
-
-let tabs = [];
-let activeTabIndex = 0;
-
-// Load tabs from localStorage
-if(localStorage.getItem("tabsData")) {
-  const saved = JSON.parse(localStorage.getItem("tabsData"));
-  tabs = saved.tabs;
-  activeTabIndex = saved.activeTabIndex;
-} else {
-  tabs = [{ name: "Home", url: "lan://pw.home.fun", history: [] }];
-  activeTabIndex = 0;
-}
-
-// Save tabs to localStorage
-function saveTabs() {
-  localStorage.setItem("tabsData", JSON.stringify({
-    tabs,
-    activeTabIndex
-  }));
-}
-
-function renderTabs() {
-  const tabBar = document.getElementById("tabBar");
-  tabBar.innerHTML = "";
-  tabs.forEach((tab, i) => {
-    const el = document.createElement("div");
-    el.className = "tab" + (i === activeTabIndex ? " active" : "");
-    el.textContent = tab.name;
-
-    // Close button
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "closeTab";
-    closeBtn.textContent = "×";
-    closeBtn.onclick = (e) => {
-      e.stopPropagation();
-      closeTab(i);
-    };
-    el.appendChild(closeBtn);
-
-    el.onclick = () => switchTab(i);
-    tabBar.appendChild(el);
-  });
-  saveTabs(); // save any tab changes
-}
-
-function switchTab(index) {
-  activeTabIndex = index;
-  const tab = tabs[index];
-  document.getElementById("address").value = tab.url;
-  loadURL(mapURL(tab.url));
-  renderTabs();
-}
-
-function addTab(name, url) {
-  if(tabs.length >= maxTabs) {
-    alert("Maximum 10 tabs reached!");
-    return;
-  }
-  tabs.push({ name, url, history: [] });
-  activeTabIndex = tabs.length - 1;
-  switchTab(activeTabIndex);
-}
-
-function createNewTab() {
-  addTab("New Tab", "lan://pw.home.fun");
-}
-
-function closeTab(index) {
-  if(tabs.length === 1) return;
-  tabs.splice(index, 1);
-  if(activeTabIndex >= index) activeTabIndex = Math.max(0, activeTabIndex-1);
-  switchTab(activeTabIndex);
-}
-
-/* ----------------- BROWSER / IFRAME ----------------- */
-let currentURL = "";
-const homePage = "pages/home.html";
-
-function mapURL(url) {
-  if(url.startsWith("lan://pw.")) {
-    const page = url.replace("lan://pw.", "").replace(".fun","");
-    return "pages/" + page + ".html";
-  }
-  return url;
-}
-
-function loadURL(url) {
-  currentURL = url;
-  document.getElementById('contentFrame').src = url;
-}
-
-function goToURL() {
-  const raw = document.getElementById("address").value.trim();
-  if(!raw) return;
-  tabs[activeTabIndex].url = raw;
-  renderTabs();
-  const mapped = mapURL(raw);
-  tabs[activeTabIndex].history.push(currentURL);
-  loadURL(mapped);
-}
-
-function goBack() {
-  const hist = tabs[activeTabIndex].history;
-  if(hist.length > 0) {
-    const lastURL = hist.pop();
-    tabs[activeTabIndex].url = lastURL;
-    document.getElementById("address").value = lastURL;
-    loadURL(mapURL(lastURL));
-    renderTabs();
-  }
-}
-
-function refreshPage() {
-  loadURL(mapURL(tabs[activeTabIndex].url));
-}
-
-function goHome() {
-  const raw = "lan://pw.home.fun";
-  tabs[activeTabIndex].url = raw;
-  document.getElementById("address").value = raw;
-  renderTabs();
-  loadURL(mapURL(raw));
-}
-
-/* ----------------- INITIAL LOAD ----------------- */
-renderTabs();
-loadURL(mapURL(tabs[activeTabIndex].url));
-document.getElementById("address").value = tabs[activeTabIndex].url;
-
+<!-- link to JS -->
+<script src="browser.js"></script>
+</body>
+</html>
