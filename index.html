@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Inside Browser</title>
-<link rel="stylesheet" href="style.css"> <!-- optional for CSS if you want -->
 <style>
 html, body { margin:0; height:100%; font-family:Arial,sans-serif; }
 #tabBar { display:flex; gap:4px; padding:4px 8px; background:#ddd; border-bottom:1px solid #ccc; position:fixed; top:0; left:0; width:100%; z-index:20; overflow-x:auto; }
@@ -34,7 +33,133 @@ html, body { margin:0; height:100%; font-family:Arial,sans-serif; }
   <iframe id="contentFrame" src=""></iframe>
 </div>
 
-<!-- link to JS -->
-<script src="browser.js"></script>
+<script>
+/* ----------------- SETTINGS ----------------- */
+const maxTabs = 10;
+const homeURL = "lan://pw.home.fun";
+
+/* ----------------- STATE ----------------- */
+let tabs = [];
+let activeTabIndex = 0;
+let currentURL = "";
+
+/* ----------------- STORAGE ----------------- */
+function saveTabs() {
+  localStorage.setItem("tabsData", JSON.stringify({ tabs, activeTabIndex }));
+}
+
+function loadTabs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("tabsData"));
+    if(saved && saved.tabs && saved.tabs.length>0) {
+      tabs = saved.tabs;
+      activeTabIndex = saved.activeTabIndex || 0;
+      if(activeTabIndex >= tabs.length) activeTabIndex = 0;
+    } else {
+      tabs = [{ name:"Home", url:homeURL, history:[] }];
+      activeTabIndex = 0;
+    }
+  } catch(e) {
+    tabs = [{ name:"Home", url:homeURL, history:[] }];
+    activeTabIndex = 0;
+  }
+  renderTabs();
+  switchTab(activeTabIndex,false); // initial load, don't save yet
+}
+
+/* ----------------- TAB FUNCTIONS ----------------- */
+function renderTabs() {
+  const tabBar = document.getElementById("tabBar");
+  tabBar.innerHTML = "";
+  tabs.forEach((tab,i)=>{
+    const el = document.createElement("div");
+    el.className = "tab" + (i===activeTabIndex ? " active" : "");
+    el.textContent = tab.name;
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "closeTab";
+    closeBtn.textContent = "×";
+    closeBtn.onclick = (e)=>{ e.stopPropagation(); closeTab(i); };
+    el.appendChild(closeBtn);
+    el.onclick = ()=>switchTab(i);
+    tabBar.appendChild(el);
+  });
+  saveTabs();
+}
+
+function switchTab(index, save=true) {
+  activeTabIndex = index;
+  const tab = tabs[index];
+  document.getElementById("address").value = tab.url;
+  loadURL(mapURL(tab.url));
+  renderTabs();
+  if(save) saveTabs();
+}
+
+function createNewTab() { addTab("New Tab", homeURL); }
+
+function addTab(name,url){
+  if(tabs.length >= maxTabs){ alert("Maximum 10 tabs!"); return; }
+  tabs.push({ name,url, history:[] });
+  switchTab(tabs.length-1);
+}
+
+function closeTab(index){
+  if(tabs.length===1) return;
+  tabs.splice(index,1);
+  if(activeTabIndex>=index) activeTabIndex = Math.max(0,activeTabIndex-1);
+  switchTab(activeTabIndex);
+}
+
+/* ----------------- URL MAPPING ----------------- */
+function mapURL(url){
+  if(url.startsWith("lan://pw.")){
+    const page = url.replace("lan://pw.","").replace(".fun","");
+    return "pages/"+page+".html";
+  }
+  return url;
+}
+
+/* ----------------- IFRAME / BROWSER ----------------- */
+function loadURL(url){ 
+  currentURL = url; 
+  document.getElementById("contentFrame").src = url;
+}
+
+function goToURL(){
+  const raw = document.getElementById("address").value.trim();
+  if(!raw) return;
+  tabs[activeTabIndex].url = raw;
+  renderTabs();
+  tabs[activeTabIndex].history.push(currentURL);
+  loadURL(mapURL(raw));
+  saveTabs();
+}
+
+function goBack(){
+  const hist = tabs[activeTabIndex].history;
+  if(hist.length>0){
+    const last = hist.pop();
+    tabs[activeTabIndex].url = last;
+    document.getElementById("address").value = last;
+    loadURL(mapURL(last));
+    renderTabs();
+    saveTabs();
+  }
+}
+
+function refreshPage(){ loadURL(mapURL(tabs[activeTabIndex].url)); }
+
+function goHome(){
+  tabs[activeTabIndex].url = homeURL;
+  document.getElementById("address").value = homeURL;
+  renderTabs();
+  loadURL(mapURL(homeURL));
+  saveTabs();
+}
+
+/* ----------------- INITIAL LOAD ----------------- */
+loadTabs();
+</script>
+
 </body>
 </html>
