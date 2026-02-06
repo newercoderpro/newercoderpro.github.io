@@ -59,12 +59,20 @@
 <body>
 
   <div id="toolbar">
-    <button onclick="goBack()">⬅</button>
-    <button onclick="refreshPage()">🔄</button>
-    <input id="address" value="lan://pw.home.fun" />
-  </div>
+  <button onclick="goBack()">⬅</button>
+  <button onclick="refreshPage()">🔄</button>
 
-  <div id="viewport"></div>
+  <input
+    id="address"
+    value="lan://pw.home.fun"
+    onkeydown="if(event.key==='Enter'){navigate(this.value)}"
+  />
+
+  <button onclick="navigate(document.getElementById('address').value)">
+    Go
+  </button>
+</div>
+
 
 <script>
   let historyStack = [];
