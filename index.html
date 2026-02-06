@@ -95,15 +95,25 @@
   }
 
   function loadPrivate(url) {
-    if (url === "lan://pw.home.fun") {
-      document.getElementById("viewport").innerHTML = `
-        <div class="center">
-          <div class="logo">Inside</div>
-          <input class="search" placeholder="Search Inside or type a lan:// address"
-            onkeydown="if(event.key==='Enter'){navigate(this.value)}" />
-        </div>
-      `;
-      return;
+    document.getElementById("viewport").innerHTML = `
+  <div class="center">
+    <div class="logo">Inside</div>
+
+    <input
+      class="search"
+      id="insideSearch"
+      placeholder="Search Inside or type a lan:// address"
+      onkeydown="if(event.key==='Enter'){navigate(this.value)}"
+    />
+
+    <br><br>
+
+    <button onclick="navigate(document.getElementById('insideSearch').value)">
+      Search
+    </button>
+  </div>
+`;
+
     }
 
     let page = url
