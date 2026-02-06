@@ -5,16 +5,49 @@
   <title>Inside</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f1f3f4;
-      text-align: center;
-      padding-top: 120px;
+      background: #fff;
     }
-    h1 {
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: #f1f3f4;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #toolbar button {
+      font-size: 16px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    #address {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 16px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    #viewport {
+      padding: 40px;
+    }
+
+    .center {
+      text-align: center;
+      margin-top: 120px;
+    }
+
+    .logo {
       font-size: 64px;
       margin-bottom: 20px;
     }
-    input {
+
+    .search {
       width: 420px;
       padding: 14px;
       font-size: 18px;
@@ -25,8 +58,84 @@
 </head>
 <body>
 
-  <h1>Inside</h1>
-  <input placeholder="Search Inside or type a lan:// address" />
+  <div id="toolbar">
+    <button onclick="goBack()">⬅</button>
+    <button onclick="refreshPage()">🔄</button>
+    <input id="address" value="lan://pw.home.fun" />
+  </div>
+
+  <div id="viewport"></div>
+
+<script>
+  let historyStack = [];
+  let currentURL = "";
+
+  function navigate(url) {
+    historyStack.push(currentURL);
+    loadURL(url);
+  }
+
+  function loadURL(url) {
+    currentURL = url;
+    document.getElementById("address").value = url;
+
+    if (url.startsWith("lan://")) {
+      loadPrivate(url);
+    } else {
+      loadExternal(url);
+    }
+  }
+
+  function loadPrivate(url) {
+    if (url === "lan://pw.home.fun") {
+      document.getElementById("viewport").innerHTML = `
+        <div class="center">
+          <div class="logo">Inside</div>
+          <input class="search" placeholder="Search Inside or type a lan:// address"
+            onkeydown="if(event.key==='Enter'){navigate(this.value)}" />
+        </div>
+      `;
+      return;
+    }
+
+    let page = url
+      .replace("lan://", "")
+      .replace("pw.", "")
+      .replace(".fun", "");
+
+    fetch("pages/" + page + ".html")
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById("viewport").innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById("viewport").innerHTML =
+          "<h2>Page not found</h2>";
+      });
+  }
+
+  function loadExternal(url) {
+    document.getElementById("viewport").innerHTML =
+      `<iframe src="${url}" style="width:100%;height:80vh;border:none;"></iframe>`;
+  }
+
+  function goBack() {
+    if (historyStack.length > 0) {
+      loadURL(historyStack.pop());
+    }
+  }
+
+  function refreshPage() {
+    loadURL(currentURL);
+  }
+
+  document.getElementById("address").addEventListener("keydown", e => {
+    if (e.key === "Enter") navigate(e.target.value);
+  });
+
+  loadURL("lan://pw.home.fun");
+</script>
 
 </body>
 </html>
+
