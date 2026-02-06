@@ -35,6 +35,7 @@
 
     #viewport {
       padding: 40px;
+      min-height: 80vh;
     }
 
     .center {
@@ -58,102 +59,88 @@
 </head>
 <body>
 
+  <!-- TOP TOOLBAR -->
   <div id="toolbar">
-  <button onclick="goBack()">⬅</button>
-  <button onclick="refreshPage()">🔄</button>
-
-  <input
-    id="address"
-    value="lan://pw.home.fun"
-    onkeydown="if(event.key==='Enter'){navigate(this.value)}"
-  />
-
-  <button onclick="navigate(document.getElementById('address').value)">
-    Go
-  </button>
-</div>
-
-
-<script>
-  let historyStack = [];
-  let currentURL = "";
-
-  function navigate(url) {
-    historyStack.push(currentURL);
-    loadURL(url);
-  }
-
-  function loadURL(url) {
-    currentURL = url;
-    document.getElementById("address").value = url;
-
-    if (url.startsWith("lan://")) {
-      loadPrivate(url);
-    } else {
-      loadExternal(url);
-    }
-  }
-
-  function loadPrivate(url) {
-    document.getElementById("viewport").innerHTML = `
-  <div class="center">
-    <div class="logo">Inside</div>
-
+    <button onclick="goBack()">⬅</button>
+    <button onclick="refreshPage()">🔄</button>
     <input
-      class="search"
-      id="insideSearch"
-      placeholder="Search Inside or type a lan:// address"
+      id="address"
+      value="lan://pw.home.fun"
       onkeydown="if(event.key==='Enter'){navigate(this.value)}"
     />
-
-    <br><br>
-
-    <button onclick="navigate(document.getElementById('insideSearch').value)">
-      Search
-    </button>
+    <button onclick="navigate(document.getElementById('address').value)">Go</button>
   </div>
-`;
 
+  <!-- VIEWPORT -->
+  <div id="viewport"></div>
+
+  <script>
+    let historyStack = [];
+    let currentURL = "";
+
+    function navigate(url) {
+      if (currentURL) historyStack.push(currentURL);
+      loadURL(url);
     }
 
-    let page = url
-      .replace("lan://", "")
-      .replace("pw.", "")
-      .replace(".fun", "");
+    function loadURL(url) {
+      currentURL = url;
+      document.getElementById("address").value = url;
 
-    fetch("pages/" + page + ".html")
-      .then(r => r.text())
-      .then(html => {
-        document.getElementById("viewport").innerHTML = html;
-      })
-      .catch(() => {
-        document.getElementById("viewport").innerHTML =
-          "<h2>Page not found</h2>";
-      });
-  }
-
-  function loadExternal(url) {
-    document.getElementById("viewport").innerHTML =
-      `<iframe src="${url}" style="width:100%;height:80vh;border:none;"></iframe>`;
-  }
-
-  function goBack() {
-    if (historyStack.length > 0) {
-      loadURL(historyStack.pop());
+      if (url.startsWith("lan://")) {
+        loadPrivate(url);
+      } else {
+        loadExternal(url);
+      }
     }
-  }
 
-  function refreshPage() {
-    loadURL(currentURL);
-  }
+    function loadPrivate(url) {
+      // Home page
+      if (url === "lan://pw.home.fun") {
+        document.getElementById("viewport").innerHTML = `
+          <div class="center">
+            <div class="logo">Inside</div>
+            <input
+              class="search"
+              id="insideSearch"
+              placeholder="Search Inside or type a lan:// address"
+              onkeydown="if(event.key==='Enter'){navigate(this.value)}"
+            />
+            <br><br>
+            <button onclick="navigate(document.getElementById('insideSearch').value)">Search</button>
+          </div>
+        `;
+        return;
+      }
 
-  document.getElementById("address").addEventListener("keydown", e => {
-    if (e.key === "Enter") navigate(e.target.value);
-  });
+      // Other private pages
+      let page = url
+        .replace("lan://", "")
+        .replace("pw.", "")
+        .replace(".fun", "");
 
-  loadURL("lan://pw.home.fun");
-</script>
+      fetch("pages/" + page + ".html")
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById("viewport").innerHTML = html;
+        })
+        .catch(() => {
+          document.getElementById("viewport").innerHTML =
+            "<h2>Page not found</h2>";
+        });
+    }
 
-</body>
-</html>
+    function loadExternal(url) {
+      document.getElementById("viewport").innerHTML =
+        `<iframe src="${url}" style="width:100%;height:80vh;border:none;"></iframe>`;
+    }
+
+    function goBack() {
+      if (historyStack.length > 0) {
+        loadURL(historyStack.pop());
+      }
+    }
+
+    function refreshPa
+
 
