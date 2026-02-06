@@ -157,6 +157,36 @@ function goHome(){
   saveTabs();
 }
 
+  // AUTO-NAME TABS BASED ON PAGE TITLE OR FIRST H1
+document.getElementById("contentFrame").onload = function() {
+  try {
+    const iframeDoc = document.getElementById("contentFrame").contentDocument;
+    if(!iframeDoc) return;
+
+    // Try title first
+    let newName = iframeDoc.title;
+    
+    // If no title, fallback to first H1
+    if(!newName || newName.trim() === "") {
+      const h1 = iframeDoc.querySelector("h1");
+      if(h1) newName = h1.textContent.trim();
+    }
+
+    // If still empty, fallback to URL
+    if(!newName || newName.trim()==="") {
+      newName = tabs[activeTabIndex].url;
+    }
+
+    tabs[activeTabIndex].name = newName;
+    renderTabs();
+  } catch(e) {
+    // Cross-origin pages can't be accessed
+    // fallback to URL
+    tabs[activeTabIndex].name = tabs[activeTabIndex].url;
+    renderTabs();
+  }
+}
+
 /* ----------------- INITIAL LOAD ----------------- */
 loadTabs();
 </script>
