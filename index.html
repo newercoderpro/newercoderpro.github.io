@@ -114,9 +114,10 @@
     document.getElementById('address').value = "lan://pw.home.fun";
   }
 
-  // Load home page on start
-  document.getElementById('contentFrame').src = homePage;
-  document.getElementById('address').value = "lan://pw.home.fun";
+ // Load home page on start
+currentURL = homePage; // actual file
+document.getElementById('contentFrame').src = homePage; // real file
+document.getElementById('address').value = "lan://pw.home.fun"; // displayed in toolbar
 </script>
 
 </body>
