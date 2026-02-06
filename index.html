@@ -91,11 +91,28 @@ html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; }
 
 <script>
 /* ----------------- TAB SYSTEM ----------------- */
-let tabs = [
-  { name: "Home", url: "lan://pw.home.fun", history: [] }
-];
-let activeTabIndex = 0;
 const maxTabs = 10;
+
+let tabs = [];
+let activeTabIndex = 0;
+
+// Load tabs from localStorage
+if(localStorage.getItem("tabsData")) {
+  const saved = JSON.parse(localStorage.getItem("tabsData"));
+  tabs = saved.tabs;
+  activeTabIndex = saved.activeTabIndex;
+} else {
+  tabs = [{ name: "Home", url: "lan://pw.home.fun", history: [] }];
+  activeTabIndex = 0;
+}
+
+// Save tabs to localStorage
+function saveTabs() {
+  localStorage.setItem("tabsData", JSON.stringify({
+    tabs,
+    activeTabIndex
+  }));
+}
 
 function renderTabs() {
   const tabBar = document.getElementById("tabBar");
@@ -104,7 +121,7 @@ function renderTabs() {
     const el = document.createElement("div");
     el.className = "tab" + (i === activeTabIndex ? " active" : "");
     el.textContent = tab.name;
-    
+
     // Close button
     const closeBtn = document.createElement("button");
     closeBtn.className = "closeTab";
@@ -118,6 +135,7 @@ function renderTabs() {
     el.onclick = () => switchTab(i);
     tabBar.appendChild(el);
   });
+  saveTabs(); // save any tab changes
 }
 
 function switchTab(index) {
@@ -134,7 +152,8 @@ function addTab(name, url) {
     return;
   }
   tabs.push({ name, url, history: [] });
-  switchTab(tabs.length - 1);
+  activeTabIndex = tabs.length - 1;
+  switchTab(activeTabIndex);
 }
 
 function createNewTab() {
@@ -142,15 +161,14 @@ function createNewTab() {
 }
 
 function closeTab(index) {
-  if(tabs.length === 1) return; // always at least one tab
-  tabs.splice(index,1);
+  if(tabs.length === 1) return;
+  tabs.splice(index, 1);
   if(activeTabIndex >= index) activeTabIndex = Math.max(0, activeTabIndex-1);
   switchTab(activeTabIndex);
 }
 
-/* ----------------- BROWSER / IFRAME SYSTEM ----------------- */
+/* ----------------- BROWSER / IFRAME ----------------- */
 let currentURL = "";
-
 const homePage = "pages/home.html";
 
 function mapURL(url) {
@@ -158,7 +176,7 @@ function mapURL(url) {
     const page = url.replace("lan://pw.", "").replace(".fun","");
     return "pages/" + page + ".html";
   }
-  return url; // external URL
+  return url;
 }
 
 function loadURL(url) {
@@ -169,7 +187,7 @@ function loadURL(url) {
 function goToURL() {
   const raw = document.getElementById("address").value.trim();
   if(!raw) return;
-  tabs[activeTabIndex].url = raw; // update tab URL
+  tabs[activeTabIndex].url = raw;
   renderTabs();
   const mapped = mapURL(raw);
   tabs[activeTabIndex].history.push(currentURL);
@@ -192,4 +210,15 @@ function refreshPage() {
 }
 
 function goHome() {
-  tabs[activeTabIndex].url = "lan://pw.hom
+  const raw = "lan://pw.home.fun";
+  tabs[activeTabIndex].url = raw;
+  document.getElementById("address").value = raw;
+  renderTabs();
+  loadURL(mapURL(raw));
+}
+
+/* ----------------- INITIAL LOAD ----------------- */
+renderTabs();
+loadURL(mapURL(tabs[activeTabIndex].url));
+document.getElementById("address").value = tabs[activeTabIndex].url;
+
