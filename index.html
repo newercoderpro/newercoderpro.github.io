@@ -157,25 +157,45 @@ function goHome(){
   saveTabs();
 }
 
-// AUTO-NAME TABS BASED ON URL
-function autoNameTab(url) {
-  if(url.startsWith("lan://pw.")){
-    let name = url.replace("lan://pw.","").replace(".fun","");
-    // Capitalize first letter
-    name = name.charAt(0).toUpperCase() + name.slice(1);
-    tabs[activeTabIndex].name = name;
-  } else {
-    // fallback: just show URL
-    tabs[activeTabIndex].name = url;
-  }
-  renderTabs();
-}
+
 
 // Call this whenever you load a new URL
 function loadURL(url){
   currentURL = url;
   document.getElementById("contentFrame").src = url;
-  autoNameTab(url); // update tab name
+  //autoNameTab(url); // update tab name
+}
+  // AUTO-NAME TABS BASED ON URL
+// AUTO-NAME TABS BASED ON PAGE TITLE / H1 / URL fallback
+document.getElementById("contentFrame").onload = function() {
+  try {
+    const iframeDoc = document.getElementById("contentFrame").contentDocument;
+    if(!iframeDoc) return;
+
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      let newName = iframeDoc.title || "";
+      if(!newName || newName.trim()==="") {
+        const h1 = iframeDoc.querySelector("h1");
+        if(h1) newName = h1.textContent.trim();
+      }
+
+      if(!newName || newName.trim()==="") {
+        // fallback to URL
+        newName = tabs[activeTabIndex].url.replace("lan://pw.","").replace(".fun","");
+        newName = newName.charAt(0).toUpperCase() + newName.slice(1);
+      }
+
+      tabs[activeTabIndex].name = newName;
+      renderTabs();
+    }, 10); // 10ms delay
+  } catch(e) {
+    // Cross-origin or other error: fallback to URL
+    let fallback = tabs[activeTabIndex].url.replace("lan://pw.","").replace(".fun","");
+    fallback = fallback.charAt(0).toUpperCase() + fallback.slice(1);
+    tabs[activeTabIndex].name = fallback;
+    renderTabs();
+  }
 }
 
 
