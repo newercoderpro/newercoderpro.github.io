@@ -33,31 +33,17 @@ const localPages = [
 
 /* ---------------- SEARCH FUNCTION ---------------- */
 function doSearch(){
-  const query = document.getElementById("searchBox").value.trim().toLowerCase();
+  const query = document.getElementById("searchBox").value.trim();
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
 
   if(!query) return;
 
-  const matches = localPages.filter(p => p.name.toLowerCase().includes(query));
+  // Find matching local pages
+  const matches = localPages.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
 
-  if(matches.length === 0){
-    // fallback to DuckDuckGo
-    const ddgLink = document.createElement("a");
-    ddgLink.href = "#";
-    ddgLink.className = "result";
-    ddgLink.textContent = `Search DuckDuckGo for "${query}"`;
-    ddgLink.onclick = function(e){
-      e.preventDefault();
-      // open in new tab inside Inside browser
-      if(window.parent && window.parent.addTab){
-        window.parent.addTab("DuckDuckGo: " + query, "https://duckduckgo.com/?q=" + encodeURIComponent(query));
-      } else {
-        window.open("https://duckduckgo.com/?q=" + encodeURIComponent(query), "_blank");
-      }
-    }
-    resultsDiv.appendChild(ddgLink);
-  } else {
+  if(matches.length > 0){
+    // Local pages: create tab in iframe
     matches.forEach(p => {
       const a = document.createElement("a");
       a.href = "#";
@@ -65,7 +51,6 @@ function doSearch(){
       a.textContent = `${p.name} (${p.url})`;
       a.onclick = function(e){
         e.preventDefault();
-        // create a new tab in Inside browser
         if(window.parent && window.parent.addTab){
           window.parent.addTab(p.name, p.url);
         } else {
@@ -74,6 +59,43 @@ function doSearch(){
       }
       resultsDiv.appendChild(a);
     });
+  } else {
+    // Try Google first with ?igu=1
+    const googleURL = "https://www.google.com/search?igu=1&q=" + encodeURIComponent(query);
+    const a = document.createElement("a");
+    a.href = "#";
+    a.className = "result";
+    a.textContent = `Search Google for "${query}"`;
+    a.onclick = function(e){
+      e.preventDefault();
+      if(window.parent && window.parent.addTab){
+        try {
+          window.parent.addTab("Google: " + query, googleURL);
+        } catch {
+          // fallback in case iframe blocked
+          window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
+        }
+      } else {
+        window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
+      }
+    }
+    resultsDiv.appendChild(a);
+
+    // Also DuckDuckGo as alternative
+    const ddgURL = "https://duckduckgo.com/?q=" + encodeURIComponent(query);
+    const b = document.createElement("a");
+    b.href = "#";
+    b.className = "result";
+    b.textContent = `Search DuckDuckGo for "${query}"`;
+    b.onclick = function(e){
+      e.preventDefault();
+      if(window.parent && window.parent.addTab){
+        window.parent.addTab("DuckDuckGo: " + query, ddgURL);
+      } else {
+        window.open(ddgURL, "_blank");
+      }
+    }
+    resultsDiv.appendChild(b);
   }
 }
 
@@ -86,4 +108,3 @@ document.getElementById("searchBox").onkeydown = function(e){
 
 </body>
 </html>
-
