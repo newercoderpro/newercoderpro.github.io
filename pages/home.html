@@ -1,0 +1,14 @@
+<div style="text-align:center; margin-top:120px;">
+  <h1>Inside</h1>
+  <input
+    class="search"
+    id="insideSearch"
+    placeholder="Search Inside or type a lan:// address"
+    onkeydown="if(event.key==='Enter'){document.getElementById('address').value=this.value; document.querySelector('button[onclick]').click();}"
+  />
+  <br><br>
+  <button onclick="document.getElementById('address').value=document.getElementById('insideSearch').value; document.querySelector('button[onclick]').click();">
+    Search
+  </button>
+  <p>Type lan://pw.games.fun or any other private page above!</p>
+</div>
