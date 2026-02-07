@@ -10,14 +10,30 @@ body { font-family: Arial, sans-serif; text-align:center; padding:50px; }
 #results { margin-top:20px; text-align:left; max-width:500px; margin-left:auto; margin-right:auto; }
 a.result { display:block; padding:6px; text-decoration:none; color:#2196F3; border-bottom:1px solid #ccc; }
 a.result:hover { background:#eee; }
+.searchWrap {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+#searchInput {
+  width: 100%;
+  max-width: 500px;
+  padding: 12px 16px;
+  font-size: 16px;
+  border-radius: 24px;
+  border: 1px solid #ccc;
+}
+
 </style>
 </head>
 <body>
 
 <h1>Welcome to Inside</h1>
 <p>Type a page name or keyword:</p>
-
+<div class="searchWrap">
 <input type="text" id="searchBox" placeholder="Search pages...">
+</div>
 <button id="searchButton">Search</button>
 
 <div id="results"></div>
