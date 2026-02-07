@@ -25,7 +25,7 @@ html, body {
     text-align: center;
     padding: 10px 0;
     font-size: 16px;
-    z-index: 20;
+    z-index: 30;
 }
 
 #game-container {
@@ -41,32 +41,12 @@ html, body {
     border: 2px solid white;
 }
 
-/* ---------- UI ---------- */
-#ui-container {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    z-index: 10;
-}
-
-#score-display {
-    font-size: 18px;
-}
-
-input[type="number"] {
-    width: 60px;
-}
-
 /* ---------- PAUSE BUTTON ---------- */
 #pause-btn {
     position: absolute;
     top: 50px;
-    right: 10px;
-    z-index: 15;
+    right: 12px;
+    z-index: 20;
     padding: 10px 14px;
     font-size: 16px;
     border-radius: 8px;
@@ -85,10 +65,10 @@ input[type="number"] {
 
 #move-controls {
     position: absolute;
-    left: 10px;
+    left: 12px;
     bottom: 20px;
     display: flex;
-    gap: 10px;
+    gap: 12px;
     pointer-events: auto;
 }
 
@@ -96,7 +76,7 @@ input[type="number"] {
     width: 70px;
     height: 70px;
     font-size: 28px;
-    border-radius: 12px;
+    border-radius: 14px;
     border: none;
     background: rgba(255,255,255,0.25);
     color: white;
@@ -104,12 +84,12 @@ input[type="number"] {
 
 #btnShoot {
     position: absolute;
-    right: 10px;
+    right: 12px;
     bottom: 20px;
     pointer-events: auto;
 }
 
-/* Show only on touch devices */
+/* Touch devices only */
 @media (pointer: coarse) {
     #mobile-controls {
         display: block;
@@ -125,16 +105,17 @@ input[type="number"] {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 30;
+    z-index: 40;
+}
+
+.menu button {
+    padding: 12px 22px;
+    font-size: 18px;
+    margin-top: 15px;
 }
 
 .hidden {
     display: none;
-}
-
-.menu button {
-    padding: 12px 20px;
-    font-size: 16px;
 }
 </style>
 </head>
@@ -147,10 +128,6 @@ input[type="number"] {
 
     <button id="pause-btn">⏸</button>
 
-    <div id="ui-container">
-        <div id="score-display">Score: <span id="score">0</span></div>
-    </div>
-
     <!-- Mobile controls -->
     <div id="mobile-controls">
         <div id="move-controls">
@@ -160,10 +137,10 @@ input[type="number"] {
         <button id="btnShoot">●</button>
     </div>
 
-    <!-- Pause -->
+    <!-- Pause menu -->
     <div id="pause-menu" class="menu hidden">
         <h1>Paused</h1>
-        <p>Tap pause or press ESC</p>
+        <button id="resumeBtn">Resume</button>
     </div>
 
     <!-- Game over -->
@@ -180,26 +157,33 @@ const ctx = canvas.getContext("2d");
 
 const pauseBtn = document.getElementById("pause-btn");
 const pauseMenu = document.getElementById("pause-menu");
+const resumeBtn = document.getElementById("resumeBtn");
 const gameOverScreen = document.getElementById("game-over-screen");
-const scoreEl = document.getElementById("score");
 const finalScoreEl = document.getElementById("final-score");
 
 let keys = {};
 let isPaused = false;
 let isGameOver = false;
 let score = 0;
+let BASE_SIZE = 40;
 
-let player = { x:0, y:0, w:50, h:50, speed:4, shooting:false };
+let player = { x:0, y:0, w:0, h:0, speed:0, shooting:false };
 let bullets = [];
 let enemies = [];
 
+/* ---------- RESIZE & SCALE ---------- */
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
     canvas.height = window.innerHeight * 0.75;
-    player.w = canvas.width * 0.08;
+
+    BASE_SIZE = Math.min(canvas.width, canvas.height) * 0.08;
+
+    player.w = BASE_SIZE * 0.85;
     player.h = player.w;
-    player.x = canvas.width/2 - player.w/2;
-    player.y = canvas.height - player.h - 10;
+    player.x = canvas.width / 2 - player.w / 2;
+    player.y = canvas.height - player.h - 12;
+
+    player.speed = BASE_SIZE * 0.08;
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
@@ -233,30 +217,31 @@ btnShoot.addEventListener("touchstart", e => {
     if (!player.shooting) shoot();
     player.shooting = true;
 });
-btnShoot.addEventListener("touchend", e => player.shooting = false);
+btnShoot.addEventListener("touchend", () => player.shooting = false);
 
 document.body.addEventListener("touchmove", e => e.preventDefault(), { passive:false });
 
 pauseBtn.onclick = togglePause;
+resumeBtn.onclick = togglePause;
 
-/* ---------- GAME ---------- */
+/* ---------- GAME LOGIC ---------- */
 function shoot() {
     bullets.push({
-        x: player.x + player.w/2 - 4,
+        x: player.x + player.w / 2 - BASE_SIZE * 0.1,
         y: player.y,
-        w: 8,
-        h: 20,
-        s: 10
+        w: BASE_SIZE * 0.2,
+        h: BASE_SIZE * 0.5,
+        s: BASE_SIZE * 0.6
     });
 }
 
 function spawnEnemy() {
     enemies.push({
-        x: Math.random() * (canvas.width - 40),
-        y: -40,
-        w: 40,
-        h: 40,
-        s: 2
+        x: Math.random() * (canvas.width - BASE_SIZE),
+        y: -BASE_SIZE,
+        w: BASE_SIZE,
+        h: BASE_SIZE,
+        s: BASE_SIZE * 0.07
     });
 }
 
@@ -287,7 +272,6 @@ function update() {
                 bullets.splice(bi,1);
                 enemies.splice(ei,1);
                 score += 10;
-                scoreEl.textContent = score;
             }
         });
     });
@@ -304,14 +288,15 @@ function update() {
 
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="magenta";
+
+    ctx.fillStyle = "magenta";
     ctx.fillRect(player.x,player.y,player.w,player.h);
 
-    ctx.fillStyle="yellow";
-    bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
+    ctx.fillStyle = "yellow";
+    bullets.forEach(b => ctx.fillRect(b.x,b.y,b.w,b.h));
 
-    ctx.fillStyle="red";
-    enemies.forEach(e=>ctx.fillRect(e.x,e.y,e.w,e.h));
+    ctx.fillStyle = "red";
+    enemies.forEach(e => ctx.fillRect(e.x,e.y,e.w,e.h));
 }
 
 function loop() {
