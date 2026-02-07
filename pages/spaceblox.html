@@ -4,325 +4,338 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SpaceBlox</title>
+
 <style>
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+html, body {
     margin: 0;
-    background-color: #333;
+    height: 100%;
+    background: #333;
     color: white;
     font-family: Arial, sans-serif;
     overflow: hidden;
 }
+
 #navlink {
-    display: block;
-    position: absolute; 
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100%; 
-    text-align: center; 
-    background-color: #d3d3d3; 
-    padding: 10px 0; 
+    width: 100%;
+    background: #d3d3d3;
     color: #333;
-    text-decoration: none;
+    text-align: center;
+    padding: 10px 0;
     font-size: 16px;
-    z-index: 10; 
+    z-index: 20;
 }
+
 #game-container {
+    position: relative;
+    height: 100%;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    margin: 10px;
 }
+
 #gameCanvas {
-    background-color: #000;
+    background: black;
     border: 2px solid white;
-    max-width: 100%;
-    height: auto;
 }
+
+/* ---------- UI ---------- */
 #ui-container {
-    margin-top: 20px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
+    z-index: 10;
 }
+
 #score-display {
-    font-size: 24px;
+    font-size: 18px;
 }
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
+
 input[type="number"] {
     width: 60px;
-    padding: 5px;
 }
-button {
-    padding: 10px 20px;
-    cursor: pointer;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-}
-#pause-menu, #game-over-screen {
+
+/* ---------- PAUSE BUTTON ---------- */
+#pause-btn {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.8);
-    padding: 40px;
-    text-align: center;
-    border-radius: 10px;
+    top: 50px;
+    right: 10px;
+    z-index: 15;
+    padding: 10px 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.25);
+    color: white;
 }
+
+/* ---------- MOBILE CONTROLS ---------- */
+#mobile-controls {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+}
+
+#move-controls {
+    position: absolute;
+    left: 10px;
+    bottom: 20px;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+#btnLeft, #btnRight, #btnShoot {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.25);
+    color: white;
+}
+
+#btnShoot {
+    position: absolute;
+    right: 10px;
+    bottom: 20px;
+    pointer-events: auto;
+}
+
+/* Show only on touch devices */
+@media (pointer: coarse) {
+    #mobile-controls {
+        display: block;
+    }
+}
+
+/* ---------- MENUS ---------- */
+.menu {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+}
+
 .hidden {
     display: none;
 }
-#game-over-screen h1 {
-    color: red;
+
+.menu button {
+    padding: 12px 20px;
+    font-size: 16px;
 }
 </style>
 </head>
+
 <body>
 <h2 id="navlink">SpaceBlox</h2>
+
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
+
+    <button id="pause-btn">⏸</button>
+
     <div id="ui-container">
         <div id="score-display">Score: <span id="score">0</span></div>
-        <div class="control-group">
-            <label for="playerSpeed">Player Speed:</label>
-            <input type="number" id="playerSpeed" value="2" min="1" step="1">
-        </div>
-        <div class="control-group">
-            <label for="enemySpeed">Enemy Speed:</label>
-            <input type="number" id="enemySpeed" value="2" min="1" step="1">
-        </div>
-        <button id="restartBtn">Restart Game</button>
     </div>
-</div>
-<div id="pause-menu" class="hidden">
-    <h1>Game Paused</h1>
-    <p>Press <strong>Esc</strong> to resume</p>
-</div>
-<div id="game-over-screen" class="hidden">
-    <h1>Game Over</h1>
-    <p>Your final score was: <span id="final-score">0</span></p>
-    <button id="restartBtnGameOver">Restart Game</button>
+
+    <!-- Mobile controls -->
+    <div id="mobile-controls">
+        <div id="move-controls">
+            <button id="btnLeft">◀</button>
+            <button id="btnRight">▶</button>
+        </div>
+        <button id="btnShoot">●</button>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause-menu" class="menu hidden">
+        <h1>Paused</h1>
+        <p>Tap pause or press ESC</p>
+    </div>
+
+    <!-- Game over -->
+    <div id="game-over-screen" class="menu hidden">
+        <h1 style="color:red">Game Over</h1>
+        <p>Final score: <span id="final-score">0</span></p>
+        <button id="restartBtn">Restart</button>
+    </div>
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const playerSpeedInput = document.getElementById('playerSpeed');
-const enemySpeedInput = document.getElementById('enemySpeed');
-const restartBtn = document.getElementById('restartBtn');
-const restartBtnGameOver = document.getElementById('restartBtnGameOver');
-const scoreDisplay = document.getElementById('score');
-const finalScoreDisplay = document.getElementById('final-score');
-const pauseMenu = document.getElementById('pause-menu');
-const gameOverScreen = document.getElementById('game-over-screen');
+const pauseBtn = document.getElementById("pause-btn");
+const pauseMenu = document.getElementById("pause-menu");
+const gameOverScreen = document.getElementById("game-over-screen");
+const scoreEl = document.getElementById("score");
+const finalScoreEl = document.getElementById("final-score");
 
+let keys = {};
 let isPaused = false;
 let isGameOver = false;
 let score = 0;
-let animationFrameId;
 
-let player = {
-    x: 0,
-    y: 0,
-    width: 50,
-    height: 50,
-    speed: 2,
-    isShooting: false
-};
-
+let player = { x:0, y:0, w:50, h:50, speed:4, shooting:false };
 let bullets = [];
 let enemies = [];
 
-const keys = {};
-window.addEventListener('keydown', (e) => {
-    keys[e.key] = true;
-    if (e.key === 'Escape') togglePause();
-});
-window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-// ---------------------- RESPONSIVE CANVAS ----------------------
 function resizeCanvas() {
-    const aspectRatio = 5 / 3; // width:height
-    canvas.width = window.innerWidth * 0.8;
-    canvas.height = canvas.width / aspectRatio;
-
-    if (canvas.height > window.innerHeight * 0.8) {
-        canvas.height = window.innerHeight * 0.8;
-        canvas.width = canvas.height * aspectRatio;
-    }
-
-    // Update player size and position proportionally
-    player.width = canvas.width * 0.1;
-    player.height = player.width;
-    player.x = canvas.width / 2 - player.width / 2;
-    player.y = canvas.height - player.height - 10;
+    canvas.width = window.innerWidth * 0.9;
+    canvas.height = window.innerHeight * 0.75;
+    player.w = canvas.width * 0.08;
+    player.h = player.w;
+    player.x = canvas.width/2 - player.w/2;
+    player.y = canvas.height - player.h - 10;
 }
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// ---------------------- SPEEDS ----------------------
-function updateSpeeds() {
-    // Player speed proportional to canvas width
-    player.speed = parseFloat(playerSpeedInput.value) * canvas.width * 0.004;
-}
-playerSpeedInput.addEventListener('change', updateSpeeds);
-enemySpeedInput.addEventListener('change', updateSpeeds);
-updateSpeeds();
+/* ---------- INPUT ---------- */
+window.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (e.key === "Escape") togglePause();
+});
+window.addEventListener("keyup", e => keys[e.key] = false);
 
-// ---------------------- ENEMIES ----------------------
-function createEnemy() {
-    const size = canvas.width * 0.08; // proportional
-    return {
-        x: Math.random() * (canvas.width - size),
-        y: -size,
-        width: size,
-        height: size,
-        speed: parseFloat(enemySpeedInput.value) * canvas.width * 0.002
-    };
-}
+/* Mobile buttons */
+const btnLeft = document.getElementById("btnLeft");
+const btnRight = document.getElementById("btnRight");
+const btnShoot = document.getElementById("btnShoot");
 
-function spawnEnemies() {
-    if (!isPaused && !isGameOver) {
-        if (Math.random() < 0.02) enemies.push(createEnemy());
-    }
-}
-
-// ---------------------- SHOOTING ----------------------
-function shoot() {
-    const bulletWidth = canvas.width * 0.01;
-    const bulletHeight = canvas.height * 0.03;
-    bullets.push({
-        x: player.x + player.width / 2 - bulletWidth / 2,
-        y: player.y,
-        width: bulletWidth,
-        height: bulletHeight,
-        speed: canvas.height * 0.02
+function bind(btn, key) {
+    btn.addEventListener("touchstart", e => {
+        e.preventDefault(); keys[key] = true;
+    });
+    btn.addEventListener("touchend", e => {
+        e.preventDefault(); keys[key] = false;
     });
 }
 
-// ---------------------- GAME LOGIC ----------------------
+bind(btnLeft, "ArrowLeft");
+bind(btnRight, "ArrowRight");
+
+btnShoot.addEventListener("touchstart", e => {
+    e.preventDefault();
+    if (!player.shooting) shoot();
+    player.shooting = true;
+});
+btnShoot.addEventListener("touchend", e => player.shooting = false);
+
+document.body.addEventListener("touchmove", e => e.preventDefault(), { passive:false });
+
+pauseBtn.onclick = togglePause;
+
+/* ---------- GAME ---------- */
+function shoot() {
+    bullets.push({
+        x: player.x + player.w/2 - 4,
+        y: player.y,
+        w: 8,
+        h: 20,
+        s: 10
+    });
+}
+
+function spawnEnemy() {
+    enemies.push({
+        x: Math.random() * (canvas.width - 40),
+        y: -40,
+        w: 40,
+        h: 40,
+        s: 2
+    });
+}
+
 function update() {
     if (isPaused || isGameOver) return;
 
-    // Player movement
-    if ((keys['ArrowLeft'] || keys['a']) && player.x > 0) player.x -= player.speed;
-    if ((keys['ArrowRight'] || keys['d']) && player.x < canvas.width - player.width) player.x += player.speed;
+    if ((keys["ArrowLeft"] || keys["a"]) && player.x > 0)
+        player.x -= player.speed;
+    if ((keys["ArrowRight"] || keys["d"]) && player.x + player.w < canvas.width)
+        player.x += player.speed;
 
-    // Shooting
-    if (!player.isShooting && (keys[' '] || keys['ArrowUp'] || keys['w'])) {
+    if ((keys[" "] || keys["ArrowUp"]) && !player.shooting) {
         shoot();
-        player.isShooting = true;
+        player.shooting = true;
     }
-    if (!keys[' '] && !keys['ArrowUp'] && !keys['w']) player.isShooting = false;
+    if (!keys[" "] && !keys["ArrowUp"]) player.shooting = false;
 
-    // Update bullets
-    bullets.forEach((b, i) => { 
-        b.y -= b.speed; 
-        if (b.y + b.height < 0) bullets.splice(i, 1); 
-    });
+    bullets.forEach(b => b.y -= b.s);
+    bullets = bullets.filter(b => b.y > -b.h);
 
-    // Update enemies
-    enemies.forEach((e, i) => { 
-        e.y += e.speed; 
-        if (e.y > canvas.height) enemies.splice(i, 1); 
-    });
+    enemies.forEach(e => e.y += e.s);
+    enemies = enemies.filter(e => e.y < canvas.height + e.h);
 
-    // Collisions
     bullets.forEach((b, bi) => {
         enemies.forEach((e, ei) => {
-            if (b.x < e.x + e.width && b.x + b.width > e.x &&
-                b.y < e.y + e.height && b.y + b.height > e.y) {
-                bullets.splice(bi, 1);
-                enemies.splice(ei, 1);
+            if (b.x < e.x+e.w && b.x+b.w > e.x &&
+                b.y < e.y+e.h && b.y+b.h > e.y) {
+                bullets.splice(bi,1);
+                enemies.splice(ei,1);
                 score += 10;
-                scoreDisplay.textContent = score;
+                scoreEl.textContent = score;
             }
         });
     });
 
-    // Player collision
     enemies.forEach(e => {
-        if (player.x < e.x + e.width && player.x + player.width > e.x &&
-            player.y < e.y + e.height && player.y + player.height > e.y) {
+        if (player.x < e.x+e.w && player.x+player.w > e.x &&
+            player.y < e.y+e.h && player.y+player.h > e.y) {
             gameOver();
         }
     });
 
-    spawnEnemies();
+    if (Math.random() < 0.02) spawnEnemy();
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="magenta";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
 
-    // Player
-    ctx.fillStyle = 'magenta';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.fillStyle="yellow";
+    bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
 
-    // Bullets
-    ctx.fillStyle = 'yellow';
-    bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
-
-    // Enemies
-    ctx.fillStyle = 'red';
-    enemies.forEach(e => ctx.fillRect(e.x, e.y, e.width, e.height));
+    ctx.fillStyle="red";
+    enemies.forEach(e=>ctx.fillRect(e.x,e.y,e.w,e.h));
 }
 
-function gameLoop() {
+function loop() {
     update();
     draw();
-    animationFrameId = requestAnimationFrame(gameLoop);
+    requestAnimationFrame(loop);
 }
 
-// ---------------------- PAUSE & GAME OVER ----------------------
+/* ---------- STATE ---------- */
 function togglePause() {
     if (isGameOver) return;
     isPaused = !isPaused;
-    if (isPaused) {
-        pauseMenu.classList.remove('hidden');
-        cancelAnimationFrame(animationFrameId);
-    } else {
-        pauseMenu.classList.add('hidden');
-        gameLoop();
-    }
+    pauseMenu.classList.toggle("hidden", !isPaused);
 }
 
 function gameOver() {
     isGameOver = true;
-    finalScoreDisplay.textContent = score;
-    gameOverScreen.classList.remove('hidden');
-    cancelAnimationFrame(animationFrameId);
+    finalScoreEl.textContent = score;
+    gameOverScreen.classList.remove("hidden");
 }
 
-function restartGame() {
-    isPaused = false;
-    isGameOver = false;
-    score = 0;
-    scoreDisplay.textContent = 0;
-    bullets = [];
-    enemies = [];
-    gameOverScreen.classList.add('hidden');
-    pauseMenu.classList.add('hidden');
-    resizeCanvas();
-    updateSpeeds();
-    cancelAnimationFrame(animationFrameId);
-    gameLoop();
-}
+document.getElementById("restartBtn").onclick = () => location.reload();
 
-restartBtn.addEventListener('click', restartGame);
-restartBtnGameOver.addEventListener('click', restartGame);
-
-// Start game
-gameLoop();
+loop();
 </script>
 </body>
 </html>
