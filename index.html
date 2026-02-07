@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inside Browser</title>
 <style>
+  * {
+  box-sizing: border-box;
+}
 html, body { margin:0; height:100%; font-family:Arial,sans-serif; }
-#tabBar { display:flex; gap:4px; padding:4px 8px; background:#ddd; border-bottom:1px solid #ccc; position:fixed; top:0; left:0; width:100%; z-index:20; overflow-x:auto; }
+#tabBar { display:flex; gap:4px; padding:4px 8px; background:#ddd; border-bottom:1px solid #ccc; position:fixed; top:0; left:0; right:0; z-index:20; overflow-x:auto; }
 .tab { padding:6px 12px; background:#eee; border-radius:4px 4px 0 0; cursor:pointer; display:flex; align-items:center; gap:4px; flex-shrink:0; }
 .tab.active { background:#fff; font-weight:bold; border-bottom:2px solid #2196F3; }
 .tab button.closeTab { background:transparent; border:none; cursor:pointer; font-weight:bold; font-size:14px; }
-#toolbar { display:flex; align-items:center; gap:8px; padding:8px; background:#f1f3f4; border-bottom:1px solid #ccc; position:fixed; top:32px; width:100%; left:0; z-index:10; }
+#toolbar { display:flex; align-items:center; gap:8px; padding:8px; background:#f1f3f4; border-bottom:1px solid #ccc; position:fixed; top:32px; right:0; left:0; z-index:10; }
 #toolbar button { font-size:16px; padding:6px 10px; cursor:pointer; }
 #address { flex:1; padding:8px 12px; border-radius:16px; border:1px solid #ccc; font-size:14px; }
 #iframeContainer { position:absolute; top:80px; bottom:0; left:0; right:0; }
