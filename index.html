@@ -73,22 +73,22 @@ iframe { width: 100%; height: 100%; border: none; }
   }
 
   #address {
-    font-size: 16px;
-    padding: 12px 16px;
-  }
-
-  #iframeContainer {
-    top: 120px;
-  }
-  #address {
+    flex: none;
     width: 90px;
+    min-width: 90px;
+    max-width: none;
     font-size: 16px;
+    transition: width 0.25s ease;
   }
 
   #address:focus {
     width: 100%;
   }
 
+  #iframeContainer {
+    top: 120px;
+  }
+ 
   #toolbar {
     gap: 4px;
     padding: 6px;
