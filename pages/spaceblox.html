@@ -41,6 +41,28 @@ html, body {
     border: 2px solid white;
 }
 
+/* ---------- SETTINGS ---------- */
+#settings {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    z-index: 15;
+    font-size: 14px;
+}
+
+.setting {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.setting input {
+    width: 60px;
+}
+
 /* ---------- PAUSE BUTTON ---------- */
 #pause-btn {
     position: absolute;
@@ -89,7 +111,6 @@ html, body {
     pointer-events: auto;
 }
 
-/* Touch devices only */
 @media (pointer: coarse) {
     #mobile-controls {
         display: block;
@@ -128,6 +149,18 @@ html, body {
 
     <button id="pause-btn">⏸</button>
 
+    <!-- Settings -->
+    <div id="settings">
+        <div class="setting">
+            <label>Player Speed</label>
+            <input type="number" id="playerSpeed" value="1" min="0.5" step="0.1">
+        </div>
+        <div class="setting">
+            <label>Enemy Speed</label>
+            <input type="number" id="enemySpeed" value="1" min="0.5" step="0.1">
+        </div>
+    </div>
+
     <!-- Mobile controls -->
     <div id="mobile-controls">
         <div id="move-controls">
@@ -161,6 +194,9 @@ const resumeBtn = document.getElementById("resumeBtn");
 const gameOverScreen = document.getElementById("game-over-screen");
 const finalScoreEl = document.getElementById("final-score");
 
+const playerSpeedInput = document.getElementById("playerSpeed");
+const enemySpeedInput = document.getElementById("enemySpeed");
+
 let keys = {};
 let isPaused = false;
 let isGameOver = false;
@@ -183,10 +219,16 @@ function resizeCanvas() {
     player.x = canvas.width / 2 - player.w / 2;
     player.y = canvas.height - player.h - 12;
 
-    player.speed = BASE_SIZE * 0.08;
+    updateSpeeds();
 }
 window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+
+/* ---------- SPEED SETTINGS ---------- */
+function updateSpeeds() {
+    player.speed = BASE_SIZE * 0.08 * parseFloat(playerSpeedInput.value);
+}
+playerSpeedInput.addEventListener("input", updateSpeeds);
+enemySpeedInput.addEventListener("input", updateSpeeds);
 
 /* ---------- INPUT ---------- */
 window.addEventListener("keydown", e => {
@@ -195,7 +237,6 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-/* Mobile buttons */
 const btnLeft = document.getElementById("btnLeft");
 const btnRight = document.getElementById("btnRight");
 const btnShoot = document.getElementById("btnShoot");
@@ -208,7 +249,6 @@ function bind(btn, key) {
         e.preventDefault(); keys[key] = false;
     });
 }
-
 bind(btnLeft, "ArrowLeft");
 bind(btnRight, "ArrowRight");
 
@@ -219,12 +259,10 @@ btnShoot.addEventListener("touchstart", e => {
 });
 btnShoot.addEventListener("touchend", () => player.shooting = false);
 
-document.body.addEventListener("touchmove", e => e.preventDefault(), { passive:false });
-
 pauseBtn.onclick = togglePause;
 resumeBtn.onclick = togglePause;
 
-/* ---------- GAME LOGIC ---------- */
+/* ---------- GAME ---------- */
 function shoot() {
     bullets.push({
         x: player.x + player.w / 2 - BASE_SIZE * 0.1,
@@ -241,7 +279,7 @@ function spawnEnemy() {
         y: -BASE_SIZE,
         w: BASE_SIZE,
         h: BASE_SIZE,
-        s: BASE_SIZE * 0.07
+        s: BASE_SIZE * 0.07 * parseFloat(enemySpeedInput.value)
     });
 }
 
@@ -288,13 +326,10 @@ function update() {
 
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-
     ctx.fillStyle = "magenta";
     ctx.fillRect(player.x,player.y,player.w,player.h);
-
     ctx.fillStyle = "yellow";
     bullets.forEach(b => ctx.fillRect(b.x,b.y,b.w,b.h));
-
     ctx.fillStyle = "red";
     enemies.forEach(e => ctx.fillRect(e.x,e.y,e.w,e.h));
 }
@@ -320,6 +355,8 @@ function gameOver() {
 
 document.getElementById("restartBtn").onclick = () => location.reload();
 
+/* Init */
+resizeCanvas();
 loop();
 </script>
 </body>
