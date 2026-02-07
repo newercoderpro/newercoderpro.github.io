@@ -27,14 +27,15 @@ html, body { margin:0; height:100%; font-family:Arial,sans-serif; }
   z-index: 10;
 }
 #toolbar button { font-size:16px; padding:6px 10px; cursor:pointer;  flex-shrink: 0; }
-#address {
-  width: 120px;
-  max-width: 100%;
+#address #address {
+  flex: 1;
+  min-width: 300px;
+  max-width: 800px;
+
   padding: 8px 12px;
   border-radius: 16px;
   border: 1px solid #ccc;
   font-size: 14px;
-  transition: width 0.25s ease;
 }
 #address:focus {
   width: 100%;
