@@ -33,7 +33,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 #game-container {
@@ -49,8 +49,8 @@ html, body {
 /* ---------- PAUSE BUTTON ---------- */
 #pause-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     z-index: 10;
     padding: 8px 12px;
     font-size: 16px;
@@ -60,7 +60,7 @@ html, body {
     color: white;
 }
 
-/* ---------- PAUSE OVERLAY (CANVAS ONLY) ---------- */
+/* ---------- PAUSE OVERLAY ---------- */
 #pause-menu {
     position: absolute;
     inset: 0;
@@ -73,7 +73,7 @@ html, body {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* ---------- SETTINGS ---------- */
@@ -159,7 +159,6 @@ html, body {
         </div>
     </div>
 
-    <!-- Settings -->
     <div id="settings">
         <div class="setting">
             <label>Player Speed</label>
@@ -186,19 +185,17 @@ const enemySpeedInput = document.getElementById("enemySpeed");
 
 let keys = {};
 let isPaused = false;
+let isGameOver = false;
 let BASE_SIZE = 40;
 
 let player = { x:0, y:0, w:0, h:0, speed:0, shooting:false };
 let bullets = [];
 let enemies = [];
 
-/* ---------- RESIZE (FIXED) ---------- */
+/* ---------- RESIZE ---------- */
 function resizeCanvas() {
-    const maxWidth = window.innerWidth * 0.9;
-    const maxHeight = window.innerHeight * 0.6;
-
-    canvas.width = maxWidth;
-    canvas.height = maxHeight;
+    canvas.width = window.innerWidth * 0.9;
+    canvas.height = window.innerHeight * 0.6;
 
     BASE_SIZE = Math.min(canvas.width, canvas.height) * 0.08;
 
@@ -226,23 +223,20 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 /* Mobile */
-const btnLeft = document.getElementById("btnLeft");
-const btnRight = document.getElementById("btnRight");
-const btnShoot = document.getElementById("btnShoot");
-
 function bind(btn, key) {
     btn.addEventListener("touchstart", e => { e.preventDefault(); keys[key] = true; });
     btn.addEventListener("touchend", e => { e.preventDefault(); keys[key] = false; });
 }
-bind(btnLeft, "ArrowLeft");
-bind(btnRight, "ArrowRight");
 
-btnShoot.addEventListener("touchstart", e => {
+bind(document.getElementById("btnLeft"), "ArrowLeft");
+bind(document.getElementById("btnRight"), "ArrowRight");
+
+document.getElementById("btnShoot").addEventListener("touchstart", e => {
     e.preventDefault();
     if (!player.shooting) shoot();
     player.shooting = true;
 });
-btnShoot.addEventListener("touchend", () => player.shooting = false);
+document.getElementById("btnShoot").addEventListener("touchend", () => player.shooting = false);
 
 pauseBtn.onclick = togglePause;
 resumeBtn.onclick = togglePause;
@@ -268,8 +262,17 @@ function spawnEnemy() {
     });
 }
 
+function rectsCollide(a, b) {
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+    );
+}
+
 function update() {
-    if (isPaused) return;
+    if (isPaused || isGameOver) return;
 
     if ((keys["ArrowLeft"] || keys["a"]) && player.x > 0) player.x -= player.speed;
     if ((keys["ArrowRight"] || keys["d"]) && player.x + player.w < canvas.width) player.x += player.speed;
@@ -284,17 +287,24 @@ function update() {
     bullets = bullets.filter(b => b.y > -b.h);
 
     enemies.forEach(e => e.y += e.s);
-    enemies = enemies.filter(e => e.y < canvas.height + e.h);
 
     bullets.forEach((b, bi) => {
         enemies.forEach((e, ei) => {
-            if (b.x < e.x+e.w && b.x+b.w > e.x &&
-                b.y < e.y+e.h && b.y+b.h > e.y) {
-                bullets.splice(bi,1);
-                enemies.splice(ei,1);
+            if (rectsCollide(b, e)) {
+                bullets.splice(bi, 1);
+                enemies.splice(ei, 1);
             }
         });
     });
+
+    enemies.forEach(e => {
+        if (rectsCollide(player, e)) {
+            isGameOver = true;
+            alert("Game Over");
+        }
+    });
+
+    enemies = enemies.filter(e => e.y < canvas.height + e.h);
 
     if (Math.random() < 0.02) spawnEnemy();
 }
@@ -318,12 +328,12 @@ function loop() {
 /* ---------- PAUSE ---------- */
 function togglePause() {
     isPaused = !isPaused;
-    pauseMenu.classList.toggle("hidden", !isPaused);
+    if (isPaused) pauseMenu.classList.remove("hidden");
+    else pauseMenu.classList.add("hidden");
 }
 
-/* INIT (IMPORTANT) */
+/* INIT */
 resizeCanvas();
-isPaused = false;
 pauseMenu.classList.add("hidden");
 loop();
 </script>
