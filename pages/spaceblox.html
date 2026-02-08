@@ -24,11 +24,9 @@ html, body {
     color: #333;
     text-align: center;
     padding: 10px 0;
-    font-size: 16px;
     z-index: 30;
 }
 
-/* ---------- LAYOUT ---------- */
 #game-wrapper {
     height: 100%;
     display: flex;
@@ -53,7 +51,7 @@ html, body {
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 15;
+    z-index: 10;
     padding: 8px 12px;
     font-size: 16px;
     border-radius: 8px;
@@ -62,7 +60,7 @@ html, body {
     color: white;
 }
 
-/* ---------- PAUSE MENU (CANVAS ONLY) ---------- */
+/* ---------- PAUSE OVERLAY (CANVAS ONLY) ---------- */
 #pause-menu {
     position: absolute;
     inset: 0;
@@ -74,17 +72,11 @@ html, body {
     z-index: 20;
 }
 
-#pause-menu button {
-    padding: 10px 20px;
-    font-size: 18px;
-    margin-top: 15px;
-}
-
 .hidden {
     display: none;
 }
 
-/* ---------- SETTINGS BELOW CANVAS ---------- */
+/* ---------- SETTINGS ---------- */
 #settings {
     display: flex;
     gap: 20px;
@@ -200,10 +192,13 @@ let player = { x:0, y:0, w:0, h:0, speed:0, shooting:false };
 let bullets = [];
 let enemies = [];
 
-/* ---------- RESIZE ---------- */
+/* ---------- RESIZE (FIXED) ---------- */
 function resizeCanvas() {
-    canvas.width = Math.min(window.innerWidth * 0.9, 600);
-    canvas.height = window.innerHeight * 0.6;
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.6;
+
+    canvas.width = maxWidth;
+    canvas.height = maxHeight;
 
     BASE_SIZE = Math.min(canvas.width, canvas.height) * 0.08;
 
@@ -309,3 +304,28 @@ function draw() {
     ctx.fillStyle = "magenta";
     ctx.fillRect(player.x,player.y,player.w,player.h);
     ctx.fillStyle = "yellow";
+    bullets.forEach(b => ctx.fillRect(b.x,b.y,b.w,b.h));
+    ctx.fillStyle = "red";
+    enemies.forEach(e => ctx.fillRect(e.x,e.y,e.w,e.h));
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+/* ---------- PAUSE ---------- */
+function togglePause() {
+    isPaused = !isPaused;
+    pauseMenu.classList.toggle("hidden", !isPaused);
+}
+
+/* INIT (IMPORTANT) */
+resizeCanvas();
+isPaused = false;
+pauseMenu.classList.add("hidden");
+loop();
+</script>
+</body>
+</html>
