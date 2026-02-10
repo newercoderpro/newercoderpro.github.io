@@ -40,13 +40,13 @@ html, body {
     position: relative;
 }
 
-/* ---------- CANVAS ---------- */
+/* Canvas */
 #gameCanvas {
     background: black;
     border: 2px solid white;
 }
 
-/* ---------- PAUSE BUTTON ---------- */
+/* Pause button */
 #pause-btn {
     position: absolute;
     top: 8px;
@@ -60,11 +60,11 @@ html, body {
     color: white;
 }
 
-/* ---------- PAUSE OVERLAY ---------- */
-#pause-menu {
+/* Overlays */
+.overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -76,7 +76,15 @@ html, body {
     display: none !important;
 }
 
-/* ---------- SETTINGS ---------- */
+.overlay button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Settings */
 #settings {
     display: flex;
     gap: 20px;
@@ -93,7 +101,7 @@ html, body {
     width: 60px;
 }
 
-/* ---------- MOBILE CONTROLS ---------- */
+/* Mobile controls */
 #mobile-controls {
     position: absolute;
     inset: 0;
@@ -144,12 +152,19 @@ html, body {
         <canvas id="gameCanvas"></canvas>
         <button id="pause-btn">⏸</button>
 
-        <div id="pause-menu" class="hidden">
+        <!-- Pause -->
+        <div id="pause-menu" class="overlay hidden">
             <h1>Paused</h1>
             <button id="resumeBtn">Resume</button>
         </div>
 
-        <!-- Mobile controls -->
+        <!-- Game Over -->
+        <div id="gameover-menu" class="overlay hidden">
+            <h1 style="color:red;">Game Over</h1>
+            <button id="restartBtn">Restart</button>
+        </div>
+
+        <!-- Mobile -->
         <div id="mobile-controls">
             <div id="move-controls">
                 <button id="btnLeft">◀</button>
@@ -159,6 +174,7 @@ html, body {
         </div>
     </div>
 
+    <!-- Settings -->
     <div id="settings">
         <div class="setting">
             <label>Player Speed</label>
@@ -176,9 +192,12 @@ html, body {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const pauseBtn = document.getElementById("pause-btn");
 const pauseMenu = document.getElementById("pause-menu");
+const gameOverMenu = document.getElementById("gameover-menu");
+
+const pauseBtn = document.getElementById("pause-btn");
 const resumeBtn = document.getElementById("resumeBtn");
+const restartBtn = document.getElementById("restartBtn");
 
 const playerSpeedInput = document.getElementById("playerSpeed");
 const enemySpeedInput = document.getElementById("enemySpeed");
@@ -192,7 +211,7 @@ let player = { x:0, y:0, w:0, h:0, speed:0, shooting:false };
 let bullets = [];
 let enemies = [];
 
-/* ---------- RESIZE ---------- */
+/* Resize */
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
     canvas.height = window.innerHeight * 0.6;
@@ -208,40 +227,36 @@ function resizeCanvas() {
 }
 window.addEventListener("resize", resizeCanvas);
 
-/* ---------- SPEED ---------- */
+/* Speed */
 function updateSpeeds() {
     player.speed = BASE_SIZE * 0.08 * playerSpeedInput.value;
 }
 playerSpeedInput.oninput = updateSpeeds;
 enemySpeedInput.oninput = updateSpeeds;
 
-/* ---------- INPUT ---------- */
+/* Input */
 window.addEventListener("keydown", e => {
     keys[e.key] = true;
     if (e.key === "Escape") togglePause();
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-/* Mobile */
+/* Mobile buttons */
 function bind(btn, key) {
     btn.addEventListener("touchstart", e => { e.preventDefault(); keys[key] = true; });
     btn.addEventListener("touchend", e => { e.preventDefault(); keys[key] = false; });
 }
+bind(btnLeft, "ArrowLeft");
+bind(btnRight, "ArrowRight");
 
-bind(document.getElementById("btnLeft"), "ArrowLeft");
-bind(document.getElementById("btnRight"), "ArrowRight");
-
-document.getElementById("btnShoot").addEventListener("touchstart", e => {
+btnShoot.addEventListener("touchstart", e => {
     e.preventDefault();
     if (!player.shooting) shoot();
     player.shooting = true;
 });
-document.getElementById("btnShoot").addEventListener("touchend", () => player.shooting = false);
+btnShoot.addEventListener("touchend", () => player.shooting = false);
 
-pauseBtn.onclick = togglePause;
-resumeBtn.onclick = togglePause;
-
-/* ---------- GAME ---------- */
+/* Game logic */
 function shoot() {
     bullets.push({
         x: player.x + player.w / 2 - BASE_SIZE * 0.1,
@@ -262,24 +277,19 @@ function spawnEnemy() {
     });
 }
 
-function rectsCollide(a, b) {
-    return (
-        a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y
-    );
+function collide(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x &&
+           a.y < b.y+b.h && a.y+a.h > b.y;
 }
 
 function update() {
     if (isPaused || isGameOver) return;
 
-    if ((keys["ArrowLeft"] || keys["a"]) && player.x > 0) player.x -= player.speed;
-    if ((keys["ArrowRight"] || keys["d"]) && player.x + player.w < canvas.width) player.x += player.speed;
+    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+    if (keys["ArrowRight"] && player.x + player.w < canvas.width) player.x += player.speed;
 
     if ((keys[" "] || keys["ArrowUp"]) && !player.shooting) {
-        shoot();
-        player.shooting = true;
+        shoot(); player.shooting = true;
     }
     if (!keys[" "] && !keys["ArrowUp"]) player.shooting = false;
 
@@ -290,18 +300,15 @@ function update() {
 
     bullets.forEach((b, bi) => {
         enemies.forEach((e, ei) => {
-            if (rectsCollide(b, e)) {
-                bullets.splice(bi, 1);
-                enemies.splice(ei, 1);
+            if (collide(b,e)) {
+                bullets.splice(bi,1);
+                enemies.splice(ei,1);
             }
         });
     });
 
     enemies.forEach(e => {
-        if (rectsCollide(player, e)) {
-            isGameOver = true;
-            alert("Game Over");
-        }
+        if (collide(player,e)) endGame();
     });
 
     enemies = enemies.filter(e => e.y < canvas.height + e.h);
@@ -325,16 +332,35 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-/* ---------- PAUSE ---------- */
+/* Pause / Game Over */
 function togglePause() {
+    if (isGameOver) return;
     isPaused = !isPaused;
-    if (isPaused) pauseMenu.classList.remove("hidden");
-    else pauseMenu.classList.add("hidden");
+    pauseMenu.classList.toggle("hidden", !isPaused);
 }
 
-/* INIT */
+function endGame() {
+    isGameOver = true;
+    gameOverMenu.classList.remove("hidden");
+}
+
+function restartGame() {
+    isPaused = false;
+    isGameOver = false;
+    bullets = [];
+    enemies = [];
+    gameOverMenu.classList.add("hidden");
+    pauseMenu.classList.add("hidden");
+    resizeCanvas();
+}
+
+/* Buttons */
+pauseBtn.onclick = togglePause;
+resumeBtn.onclick = togglePause;
+restartBtn.onclick = restartGame;
+
+/* Init */
 resizeCanvas();
-pauseMenu.classList.add("hidden");
 loop();
 </script>
 </body>
