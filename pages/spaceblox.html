@@ -3,234 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpaceBlox Mobile & Keyboard</title>
+    <title>SpaceBlox Scalable</title>
     <style>
         body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Prevents scrollbars in iframe */
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #1a1a1a;
-            color: white;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            touch-action: none;
+            touch-action: none; /* Disables double-tap zoom */
         }
 
-        #main-wrapper {
+        /* This container holds the entire game world */
+        #game-scaler {
+            width: 850px;  /* Base width we design for */
+            height: 450px; /* Base height we design for */
+            position: relative;
+            transform-origin: center center; /* Scale from center */
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
-            max-width: 800px;
-            padding: 10px;
-        }
-
-        #game-row {
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 10px;
-            width: 100%;
-            flex-wrap: wrap;
+            background: #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        #gameCanvas {
-            background-color: #000;
-            border: 2px solid #555;
-            width: 100%; 
-            max-width: 500px; 
-            height: auto;
-            max-height: 50vh; 
-            display: block;
-        }
-
-        .side-panel {
-            display: flex;
-            gap: 10px;
-            padding: 10px;
-        }
-
-        .touch-btn {
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #888;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            user-select: none;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .touch-btn:active {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(0.92);
-        }
-
-        .fire-btn {
-            background: rgba(255, 68, 68, 0.2);
-            border-color: #ff4444;
-        }
-
-        #ui-bar {
-            width: 100%;
+        #top-ui {
+            width: 90%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            padding: 0 10px;
+            font-size: 20px;
         }
 
-        #settings-bar {
-            margin-top: 10px;
+        #main-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Canvas styling */
+        canvas {
+            background-color: #000;
+            border: 3px solid #666;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            /* Resolution is 500x300, handled in JS */
+        }
+
+        /* Control Clusters */
+        .control-cluster {
             display: flex;
             gap: 10px;
-            font-size: 12px;
+        }
+
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid #999;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, background 0.1s;
+        }
+
+        .touch-btn:active, .touch-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95);
+            border-color: white;
+        }
+
+        .fire-btn {
+            background: rgba(255, 50, 50, 0.2);
+            border-color: #ff5555;
+            height: 170px; /* Tall fire button for easy hitting */
+            border-radius: 20px;
+        }
+
+        #bottom-settings {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #aaa;
         }
 
         input[type="number"] {
-            width: 40px;
-            background: #333;
-            color: white;
+            width: 50px;
+            padding: 5px;
+            font-size: 16px;
+            background: #111;
             border: 1px solid #555;
+            color: white;
+            text-align: center;
         }
 
-        #pause-menu, #game-over-screen {
+        /* Menus (Pause / Game Over) */
+        .overlay-menu {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 30px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 2px solid #4CAF50;
             border-radius: 15px;
             text-align: center;
-            z-index: 10;
-            border: 1px solid #4CAF50;
+            z-index: 100;
+            min-width: 300px;
         }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+
         .menu-btn {
-            padding: 10px 20px;
-            margin: 5px;
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 20px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
+        
+        #pause-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
     </style>
 </head>
 <body>
 
-    <div id="main-wrapper">
-        <div id="ui-bar">
-            <div>Score: <b id="score">0</b></div>
-            <button class="menu-btn" id="pause-btn" style="background:#444">Pause</button>
+    <div id="game-scaler">
+        
+        <div id="top-ui">
+            <div>Score: <b id="score" style="color:#4CAF50">0</b></div>
+            <button id="pause-btn">PAUSE (Esc)</button>
         </div>
 
-        <div id="game-row">
-            <div class="side-panel">
+        <div id="main-row">
+            <div class="control-cluster">
                 <div id="btn-left" class="touch-btn">◀</div>
                 <div id="btn-right" class="touch-btn">▶</div>
             </div>
 
             <canvas id="gameCanvas"></canvas>
 
-            <div class="side-panel">
+            <div class="control-cluster">
                 <div id="btn-fire" class="touch-btn fire-btn">FIRE</div>
             </div>
         </div>
 
-        <div id="settings-bar">
-            <span>P-Speed: <input type="number" id="playerSpeed" value="10"></span>
-            <span>E-Speed: <input type="number" id="enemySpeed" value="10"></span>
+        <div id="bottom-settings">
+            <label>Player Spd: <input type="number" id="playerSpeed" value="10"></label>
+            <label>Enemy Spd: <input type="number" id="enemySpeed" value="10"></label>
         </div>
-    </div>
 
-    <div id="pause-menu" class="hidden">
-        <h2>PAUSED</h2>
-        <button id="resume-btn" class="menu-btn">RESUME</button>
-        <button id="restartBtn" class="menu-btn" style="background:#666">RESTART</button>
-    </div>
+        <div id="pause-menu" class="overlay-menu hidden">
+            <h1 style="margin-top:0">PAUSED</h1>
+            <button id="resume-btn" class="menu-btn">RESUME</button>
+            <button id="restartBtn" class="menu-btn" style="background:#666">RESTART</button>
+        </div>
 
-    <div id="game-over-screen" class="hidden">
-        <h2 style="color:#ff4444">GAME OVER</h2>
-        <p>Score: <span id="final-score">0</span></p>
-        <button id="restartBtnGameOver" class="menu-btn">PLAY AGAIN</button>
+        <div id="game-over-screen" class="overlay-menu hidden">
+            <h1 style="color:#ff5555; margin-top:0">GAME OVER</h1>
+            <p style="font-size: 24px">Score: <span id="final-score">0</span></p>
+            <button id="restartBtnGameOver" class="menu-btn">PLAY AGAIN</button>
+        </div>
+
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Internal Resolution (High Quality)
         canvas.width = 500;
         canvas.height = 300;
 
-        const playerSpeedInput = document.getElementById('playerSpeed');
-        const enemySpeedInput = document.getElementById('enemySpeed');
+        // Elements
+        const scaler = document.getElementById('game-scaler');
+        const playerInput = document.getElementById('playerSpeed');
+        const enemyInput = document.getElementById('enemySpeed');
         const scoreDisplay = document.getElementById('score');
         const finalScoreDisplay = document.getElementById('final-score');
         
+        // State
         let isPaused = false;
         let isGameOver = false;
         let score = 0;
         let animationFrameId;
 
+        // Modifiers (10 input = old speed values)
         const P_MOD = 0.5;
         const E_MOD = 0.2;
 
-        let player = {
-            x: canvas.width / 2 - 20,
-            y: canvas.height - 50,
-            width: 40,
-            height: 40,
-            speed: 5,
-            isShooting: false // Added flag to prevent holding key for rapid fire
-        };
-
+        let player = { x: 230, y: 250, w: 40, h: 40, speed: 5, isShooting: false };
         let bullets = [];
         let enemies = [];
         const keys = {};
         const touchState = { left: false, right: false };
 
-        // Keyboard Event Listeners
+        // --- SCALING LOGIC (The "Google Sites" Fix) ---
+        function resizeGame() {
+            // We want to fit the 850x450 container into the window
+            const targetWidth = 850;
+            const targetHeight = 450;
+            const windowW = window.innerWidth;
+            const windowH = window.innerHeight;
+
+            // Calculate scale based on the smallest dimension to ensure fit
+            const scaleX = windowW / targetWidth;
+            const scaleY = windowH / targetHeight;
+            const scale = Math.min(scaleX, scaleY) * 0.95; // 0.95 for small padding
+
+            scaler.style.transform = `scale(${scale})`;
+        }
+        
+        // Listen for window resize
+        window.addEventListener('resize', resizeGame);
+        resizeGame(); // Initial trigger
+
+        // --- INPUT HANDLERS ---
         window.addEventListener('keydown', e => {
             keys[e.key] = true;
             if (e.key === 'Escape') togglePause();
         });
-        window.addEventListener('keyup', e => keys[e.key] = false);
+        window.addEventListener('keyup', e => {
+            keys[e.key] = false;
+            // Reset shooting flag on key up
+            if (!keys[' '] && !keys['ArrowUp'] && !keys['w']) player.isShooting = false;
+        });
 
-        // Touch Event Listeners
-        function setupTouch(id, stateKey, isAction = false) {
+        // Universal Touch/Mouse Handler
+        function setupBtn(id, stateKey, isAction) {
             const btn = document.getElementById(id);
-            const start = (e) => {
+            const activate = (e) => {
                 e.preventDefault();
-                if (isAction) shoot();
-                else touchState[stateKey] = true;
+                btn.classList.add('active');
+                if (isAction) {
+                    shoot(); // Fire immediately on tap
+                } else {
+                    touchState[stateKey] = true;
+                }
             };
-            const end = (e) => {
+            const deactivate = (e) => {
                 e.preventDefault();
+                btn.classList.remove('active');
                 if (!isAction) touchState[stateKey] = false;
             };
-            btn.addEventListener('touchstart', start);
-            btn.addEventListener('touchend', end);
-            btn.addEventListener('mousedown', start);
-            btn.addEventListener('mouseup', end);
-            btn.addEventListener('mouseleave', end);
+
+            ['mousedown', 'touchstart'].forEach(evt => btn.addEventListener(evt, activate));
+            ['mouseup', 'mouseleave', 'touchend'].forEach(evt => btn.addEventListener(evt, deactivate));
         }
 
-        setupTouch('btn-left', 'left');
-        setupTouch('btn-right', 'right');
-        setupTouch('btn-fire', null, true);
+        setupBtn('btn-left', 'left', false);
+        setupBtn('btn-right', 'right', false);
+        setupBtn('btn-fire', null, true);
 
         document.getElementById('pause-btn').onclick = togglePause;
         document.getElementById('resume-btn').onclick = togglePause;
 
+        // --- GAME LOGIC ---
         function togglePause() {
             if (isGameOver) return;
             isPaused = !isPaused;
@@ -240,99 +295,86 @@
         }
 
         function updateSpeeds() {
-            player.speed = (parseInt(playerSpeedInput.value) || 1) * P_MOD;
+            player.speed = (parseInt(playerInput.value) || 1) * P_MOD;
         }
 
         function shoot() {
             if (isPaused || isGameOver) return;
-            bullets.push({ 
-                x: player.x + player.width/2 - 2, 
-                y: player.y, 
-                w: 4, 
-                h: 10, 
-                s: 7 
-            });
+            bullets.push({ x: player.x + player.w/2 - 2, y: player.y, w: 5, h: 12, s: 7 });
         }
 
         function update() {
             if (isPaused || isGameOver) return;
 
-            // Player Movement (Arrow Keys + WASD + Touch)
-            if ((keys['ArrowLeft'] || keys['a'] || touchState.left) && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if ((keys['ArrowRight'] || keys['d'] || touchState.right) && player.x < canvas.width - player.width) {
-                player.x += player.speed;
-            }
+            // Movement
+            const moveLeft = keys['ArrowLeft'] || keys['a'] || touchState.left;
+            const moveRight = keys['ArrowRight'] || keys['d'] || touchState.right;
+            const shootingKey = keys[' '] || keys['ArrowUp'] || keys['w'];
 
-            // Shooting Logic (Space, ArrowUp, W)
-            // Checks if any shoot key is pressed AND we aren't already shooting
-            if ((keys[' '] || keys['ArrowUp'] || keys['w']) && !player.isShooting) {
+            if (moveLeft && player.x > 0) player.x -= player.speed;
+            if (moveRight && player.x < canvas.width - player.w) player.x += player.speed;
+
+            // Continuous Shooting check
+            if (shootingKey && !player.isShooting) {
                 shoot();
                 player.isShooting = true;
             }
 
-            // Reset shooting flag when keys are released
-            if (!keys[' '] && !keys['ArrowUp'] && !keys['w']) {
-                player.isShooting = false;
-            }
-
-            // Update Bullets
+            // Projectiles
             bullets.forEach((b, i) => {
                 b.y -= b.s;
-                if (b.y < -10) bullets.splice(i, 1);
+                if (b.y < -20) bullets.splice(i, 1);
             });
 
-            // Update Enemies
+            // Enemies
             enemies.forEach((e, i) => {
                 e.y += e.s;
                 if (e.y > canvas.height) enemies.splice(i, 1);
                 
-                // Collision: Enemy hits Player
-                if (player.x < e.x + e.w && player.x + player.width > e.x &&
-                    player.y < e.y + e.h && player.y + player.height > e.y) {
-                    gameOver();
-                }
+                // Player Collision
+                if (rectIntersect(player, e)) gameOver();
             });
 
-            // Collision: Bullet hits Enemy
-            bullets.forEach((b, bi) => {
-                enemies.forEach((e, ei) => {
-                    if (b.x < e.x + e.w && b.x + b.w > e.x &&
-                        b.y < e.y + e.h && b.y + b.h > e.y) {
-                        bullets.splice(bi, 1);
-                        enemies.splice(ei, 1);
+            // Bullet Collision
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    if (rectIntersect(bullets[i], enemies[j])) {
+                        bullets.splice(i, 1);
+                        enemies.splice(j, 1);
                         score += 10;
                         scoreDisplay.textContent = score;
+                        break;
                     }
-                });
-            });
+                }
+            }
 
-            // Spawn Enemies
+            // Spawn
             if (Math.random() < 0.02) {
                 enemies.push({
                     x: Math.random() * (canvas.width - 30),
-                    y: -30, 
-                    w: 30, 
-                    h: 30,
-                    s: (parseInt(enemySpeedInput.value) || 1) * E_MOD
+                    y: -30, w: 30, h: 30,
+                    s: (parseInt(enemyInput.value) || 1) * E_MOD
                 });
             }
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || 
+                     r2.x + r2.w < r1.x || 
+                     r2.y > r1.y + r1.h || 
+                     r2.y + r2.h < r1.y);
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw Player
-            ctx.fillStyle = '#ff00ff';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = '#ff00ff'; // Player
+            ctx.fillRect(player.x, player.y, player.w, player.h);
             
-            // Draw Bullets
-            ctx.fillStyle = '#ffff00';
+            ctx.fillStyle = '#ffff00'; // Bullets
             bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
             
-            // Draw Enemies
-            ctx.fillStyle = '#ff3333';
+            ctx.fillStyle = '#ff3333'; // Enemies
             enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
         }
 
@@ -354,19 +396,17 @@
             scoreDisplay.textContent = 0;
             player.x = canvas.width / 2 - 20;
             bullets = []; enemies = [];
-            document.getElementById('game-over-screen').classList.add('hidden');
-            document.getElementById('pause-menu').classList.add('hidden');
+            document.querySelectorAll('.overlay-menu').forEach(el => el.classList.add('hidden'));
             updateSpeeds();
             cancelAnimationFrame(animationFrameId);
             gameLoop();
         }
 
-        // Attach Restart Handlers
         document.getElementById('restartBtn').onclick = restart;
         document.getElementById('restartBtnGameOver').onclick = restart;
-        playerSpeedInput.onchange = updateSpeeds;
+        playerInput.onchange = updateSpeeds;
 
-        // Start Game
+        // Start
         updateSpeeds();
         gameLoop();
     </script>
